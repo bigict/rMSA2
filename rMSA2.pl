@@ -62,7 +62,7 @@ my $max_target_seqs  =50000;  # max number of blastn sequences to report
 my $max_aln_seqs     =200000; # max number of blastn alignmnets to parse
 my $max_hhfilter_seqs=5000;   # max number of hhfilter sequences to report
 my $min_hhfilter_seqs=10;     # min number of hhfilter sequences to report
-my $target_Nf        =128;
+my $target_Nf        =$ENV{target_Nf} || 128;
 my $fast             =1;
 
 my $inputfasta="";
@@ -430,7 +430,8 @@ if (-s "$prefix/deep.cmsearch.a3m.gz" && `zcat $prefix/deep.cmsearch.a3m.gz|wc -
 }
 else
 {
-    &System("$bindir/qcmsearch --noali -A $tmpdir/cmsearch.a2m --cpu $cpu $tmpdir/infernal.cm $tmpdir/db|grep 'no alignment saved'");
+    &System("$bindir/cmsearch --noali -A $tmpdir/cmsearch.a2m.x --cpu $cpu $tmpdir/infernal.cm $tmpdir/db|grep 'no alignment saved'");
+    &System("$bindir/reformat.pl sto a3m $tmpdir/cmsearch.a2m.x $tmpdir/cmsearch.a2m -l 32765 -M none");
     &addQuery2a2m("$tmpdir/cmsearch.a2m","$tmpdir/cmsearch.unfilter.a3m");
     &run_hhfilter($max_hhfilter_seqs,$min_hhfilter_seqs,"$tmpdir/cmsearch.unfilter.a3m","$tmpdir/cmsearch.a3m");
     &plain2gz("$tmpdir/cmsearch.a3m", "$prefix/deep.cmsearch.a3m.gz");
@@ -465,7 +466,7 @@ for (my $dd=1;$dd<=2;$dd++)
             my $db    =$db_list[$d];
             my $strand="--toponly";
             $strand   ="" if ($dd==2);
-            &System("$timeout $bindir/qcmsearch $cmsearch_heuristics $strand --noali -o $tmpdir/cmsearch$d.$dd.out --cpu $cpu --incE 10.0 $tmpdir/infernal.cm $db");
+            &System("$timeout $bindir/cmsearch $cmsearch_heuristics $strand --noali -o $tmpdir/cmsearch$d.$dd.out --cpu $cpu --incE 10.0 $tmpdir/infernal.cm $db");
             my $tabfile="$tmpdir/cmsearch$d.$dd.tab";
             open(FP,">$tabfile");
             foreach my $line(`cat $tmpdir/cmsearch$d.$dd.out`)
@@ -514,7 +515,8 @@ for (my $dd=1;$dd<=2;$dd++)
             $incE="--incE 10.0";
         }
         &rmredundant_rawseq("$tmpdir/trimall.db", "$tmpdir/dball");
-        &System("$bindir/qcmsearch --noali -A $tmpdir/cmsearch.$dd.a2m --cpu $cpu $incE $tmpdir/infernal.cm $tmpdir/dball|grep 'no alignment saved'");
+        &System("$bindir/cmsearch --noali -A $tmpdir/cmsearch.$dd.a2m.x --cpu $cpu $incE $tmpdir/infernal.cm $tmpdir/dball|grep 'no alignment saved'");
+        &System("$bindir/reformat.pl sto a3m $tmpdir/cmsearch.$dd.a2m.x $tmpdir/cmsearch.$dd.a2m -l 32765 -M none");
         &addQuery2a2m("$tmpdir/cmsearch.$dd.a2m","$tmpdir/cmsearch.$dd.unfilter.a3m");
         &run_hhfilter($max_hhfilter_seqs,$min_hhfilter_seqs,"$tmpdir/cmsearch.$dd.unfilter.a3m","$tmpdir/cmsearch.$dd.a3m");
         &plain2gz("$tmpdir/cmsearch.$dd.a3m", "$prefix/deep.cmsearch.$dd.a3m.gz");
@@ -598,7 +600,8 @@ for (my $d=0;$d<scalar @db_list;$d++)
     {
         my $strand="--toponly";
         $strand   ="" if ( grep( /^$db$/, @db2_list) );
-        &System("$bindir/qcmsearch $strand --noali -A $tmpdir/cmsearch.b$d.a2m --cpu $cpu --incE 10.0 $tmpdir/blastn.cm $tmpdir/dball|grep 'no alignment saved'");
+        &System("$bindir/cmsearch $strand --noali -A $tmpdir/cmsearch.b$d.a2m.x --cpu $cpu --incE 10.0 $tmpdir/blastn.cm $tmpdir/dball|grep 'no alignment saved'");
+        &System("$bindir/reformat.pl sto a3m $tmpdir/cmsearch.b$d.a2m.x $tmpdir/cmsearch.b$d.a2m -l 32765 -M none");
         &addQuery2a2m("$tmpdir/cmsearch.b$d.a2m","$tmpdir/cmsearch.b$d.unfilter.a3m");
         &System("$bindir/fasta2pfam $tmpdir/cmsearch.b$d.unfilter.a3m |cat -n |sort -u -k3|sort -n|grep -ohP '\\S+\\s\\S+\$'| $bindir/pfam2fasta - > $tmpdir/cmsearch.b$d.uniq.a3m");
         $hitnum=`grep '^>' $tmpdir/cmsearch.b$d.uniq.a3m|wc -l`+0;

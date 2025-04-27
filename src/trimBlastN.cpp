@@ -218,6 +218,10 @@ void trimBlastN(const string indbfile="-", const string intabfile="-",
 
 int main(int argc, char **argv)
 {
+    // Synchronizing iostreams with printf-style I/O can be costly.
+    // std::cin and std::cout are by default synchronized with printf.
+    std::ios::sync_with_stdio(false);
+
     /* parse commad line argument */
     if(argc<3)
     {

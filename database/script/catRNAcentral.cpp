@@ -52,13 +52,13 @@ void catRNAcentral(const string infile="-",
             species_map[name]=line.substr(i+1);
             name_vec.push_back(name);
             len_map[name]=0;
-            if (outfasta=="-") cout<<line.substr(0,i)<<endl;
-            else           fp_fasta<<line.substr(0,i)<<endl;
+            if (outfasta=="-") cout<<line.substr(0,i)<<'\n';
+            else           fp_fasta<<line.substr(0,i)<<'\n';
         }
         else if (readseq)
         {
-            if (outfasta=="-") cout<<line<<endl;
-            else           fp_fasta<<line<<endl;
+            if (outfasta=="-") cout<<line<<'\n';
+            else           fp_fasta<<line<<'\n';
             len_map[name]+=line.size();
             line.clear();
         }
@@ -75,8 +75,8 @@ void catRNAcentral(const string infile="-",
     {
         name=name_vec[i];
         L=len_map[name];
-        if (outtsv=="-") cout<<name<<'\t'<<L<<'\t'<<species_map[name]<<endl;
-        else           fp_tsv<<name<<'\t'<<L<<'\t'<<species_map[name]<<endl;
+        if (outtsv=="-") cout<<name<<'\t'<<L<<'\t'<<species_map[name]<<'\n';
+        else           fp_tsv<<name<<'\t'<<L<<'\t'<<species_map[name]<<'\n';
     }
     fp_tsv.close();
     name.clear();
@@ -87,6 +87,10 @@ void catRNAcentral(const string infile="-",
 
 int main(int argc, char **argv)
 {
+    // Synchronizing iostreams with printf-style I/O can be costly.
+    // std::cin and std::cout are by default synchronized with printf.
+    std::ios::sync_with_stdio(false);
+
     /* parse commad line argument */
     if(argc<2)
     {

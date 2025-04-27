@@ -147,6 +147,10 @@ float addQuery2a3m(const string &infile_fas, const string &infile_a3m, const str
 
 int main(int argc, char **argv)
 {
+    // Synchronizing iostreams with printf-style I/O can be costly.
+    // std::cin and std::cout are by default synchronized with printf.
+    std::ios::sync_with_stdio(false);
+
     /* parse commad line argument */
     if(argc!=4)
     {

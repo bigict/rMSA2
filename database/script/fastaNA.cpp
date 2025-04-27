@@ -30,8 +30,8 @@ size_t fastaNA(const string infile="-", const string outfile="-")
         if (line.length()==0) continue;
         else if (line[0]=='>')
         {
-            if (outfile!="-") fp_out<<line<<endl;
-            else                cout<<line<<endl;
+            if (outfile!="-") fp_out<<line<<'\n';
+            else                cout<<line<<'\n';
             nseqs++;
         }
         else
@@ -46,8 +46,8 @@ size_t fastaNA(const string infile="-", const string outfile="-")
                                        &&  na!='C' && na!='G')) na='N';
                 sequence+=na;
             }
-            if (outfile!="-") fp_out<<sequence<<endl;
-            else                cout<<sequence<<endl;
+            if (outfile!="-") fp_out<<sequence<<'\n';
+            else                cout<<sequence<<'\n';
             sequence.clear();
         }
     }
@@ -60,6 +60,10 @@ size_t fastaNA(const string infile="-", const string outfile="-")
 
 int main(int argc, char **argv)
 {
+    // Synchronizing iostreams with printf-style I/O can be costly.
+    // std::cin and std::cout are by default synchronized with printf.
+    std::ios::sync_with_stdio(false);
+
     /* parse commad line argument */
     if(argc<2)
     {

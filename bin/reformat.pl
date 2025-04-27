@@ -35,7 +35,8 @@ my $numres=100;             # number of residues per line
 my $desclen=1000;           # maximum number of characters in nameline
 my $ARGC=scalar(@ARGV);
 if ($ARGC<2) {
-    die(" 
+    die("
+reformat.pl from HHsuite3
 Read a multiple alignment in one format and write it in another format
 Usage: reformat.pl [informat] [outformat] infile outfile [options] 
   or   reformat.pl [informat] [outformat] 'fileglob' .ext [options] 
@@ -66,7 +67,7 @@ Options:
   -num      add number prefix to sequence names: 'name', '1:name' '2:name' etc
   -noss     remove secondary structure sequences (beginning with >ss_)
   -sa       do not remove solvent accessibility sequences (beginning with >sa_)
-  -M first  make all columns with residue in first seuqence match columns 
+  -M first  make all columns with residue in first sequence match columns
             (default for output format a2m or a3m)
   -M int    make all columns with less than X% gaps match columns 
             (for output format a2m or a3m)
@@ -137,6 +138,7 @@ if ($options=~s/ -v\s*(\d+) / /) {$v=$1;}
 if ($options=~s/ -v / /) {$v=2;}
 if ($options=~s/ -M\s+(\d+) / /) {$matchmode="gaprule"; $match_gaprule=$1;}
 if ($options=~s/ -M\s+first / /) {$matchmode="first";   $match_gaprule=$1;}
+if ($options=~s/ -M\s+none / /)  {$matchmode="none";    $match_gaprule=$1;}
 if ($options=~s/ -u / /) {$update=1;}
 if ($options=~s/ -l\s+(\S+) / /) {$numres=$1;}
 if ($options=~s/ -lname\s+(\S+) / /) {$lname=$1;}
@@ -461,7 +463,7 @@ sub reformat()
 ################################################################################################
 # Transforming to upper-case
 ################################################################################################
-    if ($informat ne "a3m" && $informat ne "a2m") {	# Transform to upper case if input format is not A3M or A2M
+    if ($informat ne "a3m" && $informat ne "a2m" && $matchmode ne "none") {	# Transform to upper case if input format is not A3M or A2M
 	for ($k=0; $k<$n; $k++) {$seqs[$k]=~tr/a-z/A-Z/;}
     }
 
@@ -615,6 +617,46 @@ sub reformat()
 	}
     }
     
+	    
+    # Use none sequence for match state assignment?
+    if ($matchmode eq "none") {
+	
+	my @match=();
+	my $residues;
+	my @residues;
+	
+
+	# Determine which columns have a gap in first sequence
+	for ($k=0; $k<scalar(@names); $k++) {  #find seed sequence
+	    if ($names[$k]!~/^(ss_|aa_|sa_)/) {last;}
+	}
+	@residues=unpack("C*",$seqs[$k]);
+	for (my $l=0; $l<@residues; $l++) {
+	    if ($residues[$l]==46 || (97 <= $residues[$l] && $residues[$l] <= 122)) {$match[$l]=0;} else {$match[$l]=1;}
+	}
+
+	# Set columns without residue in first sequence to upper case,
+	for ($k=0; $k<$n; $k++) {
+	    @residues=unpack("C*",$seqs[$k]);
+	    $residues="";
+	    for (my $l=0; $l<@residues; $l++) {
+		if ($match[$l]) {
+		    if ($residues[$l]==46) {
+			$residues .= ".";
+		    } else {
+			$residues .= uc(chr($residues[$l]));
+		    }
+		} else {
+		    if ($residues[$l]==45) {
+			# $residues .= "-";
+		    } else {
+			$residues .= lc(chr($residues[$l]));
+		    }
+		}
+		$seqs[$k]=$residues;
+	    }
+	}
+    }
 
 ################################################################################################
 # Remove gaps etc.
@@ -746,8 +788,9 @@ sub reformat()
 
 	    # Write reference annotation line for match states (-M first)
 	    if (!$lname) {$lname=32;}
-	    $names[$nquery]=~/^\S+\s+(.*)/;
-	    printf(OUTFILE "%-$lname.$lname"."s %s\n","#=GF DE",$1);
+	    if ($names[$nquery] =~ /^\S+\s+(.*)/) {
+            printf(OUTFILE "%-$lname.$lname"."s %s\n","#=GF DE", $1);
+        }
 	    $refline=$seqs[$nquery];  
 	    $refline=~s/[a-z]/-/g;
 	    printf(OUTFILE "%-$lname.$lname"."s %s\n","#=GC RF",$refline);
@@ -782,8 +825,8 @@ sub reformat()
 		$num++;
 	    }
 	}
-	while($seqs[0] ne "") {                         # While there are still residues left
-	    for ($k=0; $k<scalar(@names); $k++) {       # go through all sequences
+	while($seqs[0] ne "") {                         # While there are still residues left, write new block of sequences
+	    for ($k=0; $k<scalar(@names); $k++) {       # Go through all sequences
 		$names[$k] =~ s/\s*(\S+).*/$1/;
 		$seqs[$k]=~s/(\S{1,$numres})//;           # remove the leftmost (up to) 60 residues from sequence $nseq
 		if (!$lname) {$lname=18;}
