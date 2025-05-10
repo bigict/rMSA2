@@ -733,7 +733,7 @@ sub addSS2cm
         print "ERROR! Cannot generate $tmpdir/nhmmer.sto\n";
         exit();
     }
-    foreach my $i(`awk '{print \$2}' $tmpdir/nhmmer.sto | head -n5 | tail -n1 | grep -b -o - | sed 's/..\$//'`)
+    foreach my $i(`awk '{print \$2}' $tmpdir/nhmmer.sto | head -n4 | tail -n1 | grep -b -o - | sed 's/..\$//'`)
     {
         chomp($i);
         &System("sed -i \"s/./&-/$i\" $tmpdir/PETfold.gap.dbn");
